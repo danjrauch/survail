@@ -24,14 +24,51 @@ function sleep(n) {
   msleep(n*1000)
 }
 
-function list(ret_val){
-  ret_val.tasks.forEach(e => console.log(chalk.blue(e.name) + ' ' + chalk.magenta(e.id)))
+function add(ret_val){
+  console.log(chalk.blue(ret_val.result.rowCount) + ' task(s) inserted ' + chalk.green('successfully.'))
 }
 
-async function execute(type, ...arg) {
+function del(ret_val){
+  console.log(chalk.blue(ret_val.result.rowCount) + ' task(s) deleted ' + chalk.green('successfully.'))
+}
+
+function digest(ret_val){
+  const N = ret_val.tasksDueToday.length + ret_val.tasksDueTomorrow.length
+  console.log(`Today is ${new Date().getMonth()+1}.${new Date().getDate()}.${new Date().getFullYear()} and you have ${N == 0 ? 'nothing due soon.' : N + ' tasks due soon.'}`)
+  if(N > 0) 
+    console.log(`You have ${ret_val.tasksDueToday.length} tasks due today and ${ret_val.tasksDueTomorrow.length} due tomorrow.`)
+  if(ret_val.tasksDueToday.length > 0){
+    console.log('Jobs due today:')
+    ret_val.tasksDueToday.forEach(e => {
+      console.log(chalk.gray(e.id) + ' ' + chalk.blueBright(e.name) + ' ' + (e.description !== null ? chalk.redBright(e.description) : ''))
+    })
+  }
+  if(ret_val.tasksDueTomorrow.length > 0){
+    console.log('Jobs due tomorrow:')
+    ret_val.tasksDueTomorrow.forEach(e => {
+      console.log(chalk.gray(e.id) + ' ' + chalk.blueBright(e.name) + ' ' + (e.description !== null ? chalk.redBright(e.description) : ''))
+    })
+  }
+}
+
+function list(ret_val){
+  ret_val.tasks.forEach(e => {
+    let dueString = ''
+    if(e.daysbetween == 0)
+      dueString = chalk.green('due today')
+    else if(e.daysbetween > 0)
+      dueString = e.daysbetween == 1 ? chalk.whiteBright(`due in 1 day`) : chalk.whiteBright(`due in ${e.daysbetween <= 5 ? chalk.magentaBright(e.daysbetween) : e.daysbetween} days`)
+    else
+      dueString = chalk.red('overdue')
+    console.log(chalk.gray(e.id) + ' ' + chalk.blueBright(e.name) + ' ' + (e.description !== null ? chalk.redBright(e.description) + ' ' : '') + dueString + ' ' +
+                chalk.gray((new Date(e.due_time).getMonth()+1) + '.' + new Date(e.due_time).getDate() + '.' + new Date(e.due_time).getFullYear()))
+  })
+}
+
+async function execute(type, ...args) {
   const client = redis.createClient(redis_url)
   const res = await fetch(server_url + '/job', {method: 'POST',
-                                                body: JSON.stringify({type:type}),
+                                                body: JSON.stringify({type:type, args:args}),
                                                 headers: {'Content-Type': 'application/json'}})
   const job = await res.json()
   const id = job.id
@@ -42,26 +79,36 @@ async function execute(type, ...arg) {
       const obj = await client.hgetallAsync('bull:work:' + id)
       const ret_val = JSON.parse(obj.returnvalue)
       if(ret_val.code == 0){
-        if(type == 'list') list(ret_val)
+        if(type == 'add') add(ret_val)
+        else if(type == 'delete') del(ret_val)
+        else if(type == 'digest') digest(ret_val)
+        else if(type == 'list') list(ret_val)
       }else
         console.log(chalk.blue(ret_val.code + ' => ') + chalk.red(ret_val.reason))
       client.quit()
       break
-    }else if(job.state != 'active')
-      console.log(job.id + ' -> ' + job.progress + ' -> ' + job.state)
-    sleep(2)
+    }
+    // else if(job.state != 'active')
+    //   console.log(job.id + ' -> ' + job.progress + ' -> ' + job.state)
+    sleep(1)
   }
 }
 
 switch(args[0]){
+  case 'add':
   case 'a':
-    // execute('auth')
-    let rawdata = fs.readFileSync(process.env.HOME + '/.sfdx/blake.winkler@servioconsulting.com.json')
-    let student = JSON.parse(rawdata)
-    console.log(student)
+    execute('add', args[1], args[2])
     break
+  case 'delete':
+  case 'd':
+    execute('delete', args.slice(1))
+    break
+  case 'list':
   case 'l':
     execute('list')
+    break
+  case 'digest':
+    execute('digest')
     break
   default:
     console.log(chalk.blue('Survail : Personal Management System'))
