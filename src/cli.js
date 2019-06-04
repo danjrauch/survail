@@ -5,6 +5,7 @@ if (result.error) {
   throw result.error
 }
 const chalk = require('chalk')
+const ora = require('ora')
 const fs = require('fs')
 const fetch = require('node-fetch')
 const bluebird = require('bluebird')
@@ -60,12 +61,16 @@ function list(ret_val){
       dueString = e.daysbetween == 1 ? chalk.whiteBright(`due in 1 day`) : chalk.whiteBright(`due in ${e.daysbetween <= 5 ? chalk.magentaBright(e.daysbetween) : e.daysbetween} days`)
     else
       dueString = chalk.red('overdue')
-    console.log(chalk.gray(e.id) + ' ' + chalk.blueBright(e.name) + ' ' + (e.description !== null ? chalk.redBright(e.description) + ' ' : '') + dueString + ' ' +
+    console.log(chalk.gray(e.id) + ' ' + chalk.blueBright(e.name) + ' ' + (e.description ? chalk.redBright(e.description) + ' ' : '') + dueString + ' ' +
                 chalk.gray((new Date(e.due_time).getMonth()+1) + '.' + new Date(e.due_time).getDate() + '.' + new Date(e.due_time).getFullYear()))
   })
 }
 
 async function execute(type, ...args) {
+  const spinner = new ora({
+    prefixText: 'loading'
+  })
+  spinner.start()
   const client = redis.createClient(redis_url)
   const res = await fetch(server_url + '/job', {method: 'POST',
                                                 body: JSON.stringify({type:type, args:args}),
@@ -76,10 +81,14 @@ async function execute(type, ...args) {
     const res = await fetch(server_url + `/job/${id}`)
     const job = await res.json()
     if(job.state == 'completed' || job.state == 'failed'){
+      job.state == 'completed' ? spinner.stop() : spinner.fail()
       const obj = await client.hgetallAsync('bull:work:' + id)
       const ret_val = JSON.parse(obj.returnvalue)
       if(ret_val.code == 0){
-        if(type == 'add') add(ret_val)
+        if(type == 'add'){
+          add(ret_val)
+          execute('list')
+        }
         else if(type == 'delete') del(ret_val)
         else if(type == 'digest') digest(ret_val)
         else if(type == 'list') list(ret_val)
@@ -97,7 +106,7 @@ async function execute(type, ...args) {
 switch(args[0]){
   case 'add':
   case 'a':
-    execute('add', args[1], args[2])
+    execute('add', args.slice(1))
     break
   case 'delete':
   case 'd':
@@ -110,6 +119,13 @@ switch(args[0]){
   case 'digest':
     execute('digest')
     break
+  case 'help':
   default:
-    console.log(chalk.blue('Survail : Personal Management System'))
+    console.log(chalk.bold.blueBright('Survail\n'))
+    console.log(chalk.underline('Commands:'))
+    console.log(chalk.magentaBright('Add a new task:       ') + 'survail [add][a] [name] [description]? [offset(days)]?')
+    console.log(chalk.magentaBright('Delete a new task:    ') + 'survail [delete][d] ...[id]')
+    console.log(chalk.magentaBright('List all open tasks:  ') + 'survail [list][l]')
+    console.log(chalk.magentaBright('See tasks due soon:   ') + 'survail [digest]')
+    console.log(chalk.greenBright  ('List all commands:    ') + 'survail [help]')
 }
