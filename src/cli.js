@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const result = require('dotenv').config({ path: '/Users/drauch/Projects/survail-cli/.env' })
+const result = require('dotenv').config({ path: __dirname + '/../.env' })
 if (result.error) {
   throw result.error
 }
@@ -33,7 +33,7 @@ function del(ret_val){
   console.log(chalk.blue(ret_val.result.rowCount) + ' task(s) deleted ' + chalk.green('successfully.'))
 }
 
-function digest(ret_val){
+function hub(ret_val){
   const N = ret_val.tasksDueToday.length + ret_val.tasksDueTomorrow.length
   console.log(`Today is ${new Date().getMonth()+1}.${new Date().getDate()}.${new Date().getFullYear()} and you have ${N == 0 ? 'nothing due soon.' : N + ' tasks due soon.'}`)
   if(N > 0) 
@@ -62,13 +62,18 @@ function list(ret_val){
     else
       dueString = chalk.red('overdue')
     console.log(chalk.gray(e.id) + ' ' + chalk.blueBright(e.name) + ' ' + (e.description ? chalk.redBright(e.description) + ' ' : '') + dueString + ' ' +
-                chalk.gray((new Date(e.due_time).getMonth()+1) + '.' + new Date(e.due_time).getDate() + '.' + new Date(e.due_time).getFullYear()))
+                chalk.gray(e.dayofweek) + ' ' + chalk.gray((new Date(e.due_time).getMonth()+1) + '.' + new Date(e.due_time).getDate() + '.' + new Date(e.due_time).getFullYear()))
   })
+}
+
+function update(ret_val){
+  console.log(chalk.blue(ret_val.result.rowCount) + ' task(s) updated ' + chalk.green('successfully.'))
 }
 
 async function execute(type, ...args) {
   const spinner = new ora({
-    prefixText: 'loading'
+    spinner: 'dots2',
+    color: 'blue'
   })
   spinner.start()
   const client = redis.createClient(redis_url)
@@ -90,8 +95,9 @@ async function execute(type, ...args) {
           execute('list')
         }
         else if(type == 'delete') del(ret_val)
-        else if(type == 'digest') digest(ret_val)
+        else if(type == 'hub') hub(ret_val)
         else if(type == 'list') list(ret_val)
+        else if(type == 'update') update(ret_val)
       }else
         console.log(chalk.blue(ret_val.code + ' => ') + chalk.red(ret_val.reason))
       client.quit()
@@ -112,20 +118,26 @@ switch(args[0]){
   case 'd':
     execute('delete', args.slice(1))
     break
+  case 'hub':
+  case 'h':
+    execute('hub')
+    break
   case 'list':
   case 'l':
     execute('list')
     break
-  case 'digest':
-    execute('digest')
+  case 'update':
+  case 'u':
+    execute('update', args.slice(1))
     break
   case 'help':
   default:
     console.log(chalk.bold.blueBright('Survail\n'))
     console.log(chalk.underline('Commands:'))
     console.log(chalk.magentaBright('Add a new task:       ') + 'survail [add][a] [name] [description]? [offset(days)]?')
-    console.log(chalk.magentaBright('Delete a new task:    ') + 'survail [delete][d] ...[id]')
+    console.log(chalk.magentaBright('Update a task:        ') + 'survail [update][u] [name:__]? [description:__]? [offset:__]?')
+    console.log(chalk.magentaBright('Delete a new task:    ') + 'survail [delete][d] [id](1:)')
     console.log(chalk.magentaBright('List all open tasks:  ') + 'survail [list][l]')
-    console.log(chalk.magentaBright('See tasks due soon:   ') + 'survail [digest]')
+    console.log(chalk.magentaBright('See the hub:          ') + 'survail [hub][h]')
     console.log(chalk.greenBright  ('List all commands:    ') + 'survail [help]')
 }
