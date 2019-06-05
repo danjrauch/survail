@@ -6,7 +6,6 @@ if (result.error) {
 }
 const chalk = require('chalk')
 const ora = require('ora')
-const fs = require('fs')
 const fetch = require('node-fetch')
 const bluebird = require('bluebird')
 const redis = require('redis')
@@ -35,7 +34,7 @@ function del(ret_val){
 
 function hub(ret_val){
   const N = ret_val.tasksDueToday.length + ret_val.tasksDueTomorrow.length
-  console.log(`Today is ${new Date().getMonth()+1}.${new Date().getDate()}.${new Date().getFullYear()} and you have ${N == 0 ? 'nothing due soon.' : N + ' tasks due soon.'}`)
+  console.log(`Today is ${new Date().getMonth()+1}.${new Date().getDate()}.${new Date().getFullYear()} and you have ${N == 0 ? 'nothing due soon.' : N + ' task(s) due soon.'}`)
   if(N > 0) 
     console.log(`You have ${ret_val.tasksDueToday.length} tasks due today and ${ret_val.tasksDueTomorrow.length} due tomorrow.`)
   if(ret_val.tasksDueToday.length > 0){
@@ -134,10 +133,10 @@ switch(args[0]){
   default:
     console.log(chalk.bold.blueBright('Survail\n'))
     console.log(chalk.underline('Commands:'))
-    console.log(chalk.magentaBright('Add a new task:       ') + 'survail [add][a] [name] [description]? [offset(days)]?')
-    console.log(chalk.magentaBright('Update a task:        ') + 'survail [update][u] [name:__]? [description:__]? [offset:__]?')
-    console.log(chalk.magentaBright('Delete a new task:    ') + 'survail [delete][d] [id](1:)')
-    console.log(chalk.magentaBright('List all open tasks:  ') + 'survail [list][l]')
-    console.log(chalk.magentaBright('See the hub:          ') + 'survail [hub][h]')
-    console.log(chalk.greenBright  ('List all commands:    ') + 'survail [help]')
+    console.log(chalk.magentaBright('Add a new task:       ') + 'survail (add | a) [name] [description]? [offset(days)]?')
+    console.log(chalk.magentaBright('Update a task:        ') + 'survail (update | u) [id] [name:__]? [description:__]? [offset:__]?')
+    console.log(chalk.magentaBright('Delete a new task:    ') + 'survail (delete | d) [id](1:)')
+    console.log(chalk.magentaBright('List all open tasks:  ') + 'survail (list | l)')
+    console.log(chalk.magentaBright('See the hub:          ') + 'survail (hub | h)')
+    console.log(chalk.greenBright  ('List all commands:    ') + 'survail help')
 }
