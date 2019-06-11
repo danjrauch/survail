@@ -1,25 +1,54 @@
 {
-  "name": "survail-cli",
-  "version": "1.0.0",
-  "description": "CLI for Survail",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "survail",
+  "version": "0.0.0",
+  "author": "Dan Rauch @danjrauch",
+  "bin": {
+    "survail": "./bin/run"
   },
-  "keywords": [
-    "CLI"
-  ],
+  "bugs": "https://github.com/danjrauch/survail/issues",
   "dependencies": {
+    "@oclif/command": "^1.5.14",
+    "@oclif/config": "^1.13.0",
+    "@oclif/plugin-help": "^2.2.0",
     "bluebird": "^3.5.5",
     "chalk": "^2.4.1",
+    "cli-ux": "^5.2.1",
     "dotenv": "^8.0.0",
     "node-fetch": "^2.6.0",
     "ora": "^3.4.0",
     "redis": "^2.8.0"
   },
-  "bin": {
-    "survail": "./src/cli.js"
+  "devDependencies": {
+    "@oclif/dev-cli": "^1.22.0",
+    "globby": "^8.0.2"
   },
-  "author": "Daniel J. Rauch",
-  "license": "MIT"
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "files": [
+    "/bin",
+    "/npm-shrinkwrap.json",
+    "/oclif.manifest.json",
+    "/src"
+  ],
+  "homepage": "https://github.com/danjrauch/survail",
+  "keywords": [
+    "oclif"
+  ],
+  "license": "MIT",
+  "main": "src/index.js",
+  "oclif": {
+    "commands": "./src/commands",
+    "bin": "survail",
+    "plugins": [
+      "@oclif/plugin-help"
+    ]
+  },
+  "repository": "danjrauch/survail",
+  "scripts": {
+    "postpack": "rm -f oclif.manifest.json",
+    "prepack": "oclif-dev manifest && oclif-dev readme",
+    "test": "echo NO TESTS",
+    "version": "oclif-dev readme && git add README.md"
+  }
 }
