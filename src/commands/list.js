@@ -45,7 +45,7 @@ class List extends Command {
               dueString = chalk.red('overdue')
             if(dueString != '')
               dueString += ' ' + chalk.gray(e.dayofweek) + ' ' + chalk.gray((new Date(e.due_time).getMonth()+1) + '.' + new Date(e.due_time).getDate() + '.' + new Date(e.due_time).getFullYear())
-            this.log(chalk.gray(e.id) + ' ' + chalk.blueBright(e.name) + ' ' + (e.description ? chalk.redBright(e.description) + ' ' : '') + dueString)
+            this.log(chalk.gray(e.id) + (e.id < 10 ? '  ' : ' ') + chalk.blueBright(e.name) + ' ' + (e.description ? chalk.redBright(e.description) + ' ' : '') + dueString)
           })
         }else
           this.log(chalk.blue(ret_val.code + ' => ') + chalk.red(ret_val.reason))
