@@ -16,7 +16,7 @@
     "dotenv": "^8.0.0",
     "node-fetch": "^2.6.0",
     "ora": "^3.4.0",
-    "redis": "^2.8.0"
+    "redis": "^3.1.1"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1.22.0",
